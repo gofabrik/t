@@ -41,6 +41,17 @@ func main() {
 `
 	td := t.TempDir()
 
+	// patch: unlike the standard library's, this package resolves
+	// through a module, so the probe program needs one pointing back at
+	// this checkout.
+	root, err := filepath.Abs("../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	gomod := "module m\n\ngo 1.25\n\nrequire github.com/gofabrik/t v0.0.0\n\nreplace github.com/gofabrik/t => " + root + "\n"
+	if err := os.WriteFile(filepath.Join(td, "go.mod"), []byte(gomod), 0644); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(filepath.Join(td, "x.go"), []byte(prog), 0644); err != nil {
 		t.Fatal(err)
 	}

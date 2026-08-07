@@ -1020,7 +1020,10 @@ func TestExecError_CustomError(t *testing.T) {
 	var b bytes.Buffer
 	err := tmpl.Execute(&b, nil)
 
-	if _, ok := errors.AsType[*CustomError](err); !ok {
+	// patch: errors.AsType is a Go 1.26 addition; this module builds
+	// with the previous release.
+	var customErr *CustomError
+	if !errors.As(err, &customErr) {
 		t.Fatalf("expected custom error; got %s", err)
 	}
 }

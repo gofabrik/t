@@ -25,4 +25,9 @@ by cmd/sync are not listed; they apply uniformly to every file.
 
 ## Patched files
 
-None yet.
+- text/template/exec_test.go: errors.AsType (added in Go 1.26)
+  replaced with errors.As, so the module builds with the previous
+  release.
+- text/template/link_test.go: the probe program gets a go.mod with a
+  replace directive pointing at this checkout; the standard library's
+  copy resolves through GOROOT and needs none.
