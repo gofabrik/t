@@ -23,8 +23,16 @@ by cmd/sync are not listed; they apply uniformly to every file.
   values typed by either package interoperate. cmd/sync performs the
   rewrite.
 
+## Added files
+
+- text/template/patch_exec.go (and tests): ExecuteFuncs, the
+  per-execution function overlay of golang/go#54450.
+
 ## Patched files
 
+- text/template/exec.go: the hooks ExecuteFuncs needs: a
+  per-execution function map on state, execute delegating to
+  executeFuncs, and overlay lookup in evalFunction.
 - text/template/exec_test.go: errors.AsType (added in Go 1.26)
   replaced with errors.As, so the module builds with the previous
   release.

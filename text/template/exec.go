@@ -34,9 +34,10 @@ func initMaxExecDepth() int {
 type state struct {
 	tmpl  *Template
 	wr    io.Writer
-	node  parse.Node // current node, for errors
-	vars  []variable // push-down stack of variable values.
-	depth int        // the height of the stack of executing templates.
+	node  parse.Node               // current node, for errors
+	vars  []variable               // push-down stack of variable values.
+	depth int                      // the height of the stack of executing templates.
+	funcs map[string]reflect.Value // patch: per-execution functions; see patch_exec.go.
 }
 
 // variable holds the dynamic value of a variable such as $, $x etc.
@@ -208,21 +209,9 @@ func (t *Template) Execute(wr io.Writer, data any) error {
 }
 
 func (t *Template) execute(wr io.Writer, data any) (err error) {
-	defer errRecover(&err)
-	value, ok := data.(reflect.Value)
-	if !ok {
-		value = reflect.ValueOf(data)
-	}
-	state := &state{
-		tmpl: t,
-		wr:   wr,
-		vars: []variable{{"$", value}},
-	}
-	if t.Tree == nil || t.Root == nil {
-		state.errorf("%q is an incomplete or empty template", t.Name())
-	}
-	state.walk(value, t.Root)
-	return
+	// patch: the body moved to executeFuncs in patch_exec.go, the one
+	// execution path.
+	return t.executeFuncs(wr, data, nil)
 }
 
 // DefinedTemplates returns a string listing the defined templates,
@@ -670,6 +659,11 @@ func (s *state) evalFunction(dot reflect.Value, node *parse.IdentifierNode, cmd 
 	s.at(node)
 	name := node.Ident
 	function, isBuiltin, ok := findFunction(name, s.tmpl)
+	// patch: per-execution functions take precedence over registered
+	// ones; see patch_exec.go.
+	if fn, found := s.funcs[name]; found {
+		function, isBuiltin, ok = fn, false, true
+	}
 	if !ok {
 		s.errorf("%q is not a defined function", name)
 	}
