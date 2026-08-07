@@ -5,6 +5,11 @@ Maintained forks of Go standard library packages.
     import "github.com/gofabrik/t/text/template"
     import "github.com/gofabrik/t/html/template"
 
+Both packages add ExecuteFuncs to the standard API: a function map
+that overrides registered functions for a single execution without
+modifying the template, as accepted in golang/go#54450. The overlay
+may only rebind registered names, which keeps escape analysis valid.
+
 The packages track the latest stable Go release; VERSION names the
 exact source tree. Release lines follow Go's: v0.26.x corresponds to
 Go 1.26, and the module builds with the previous Go release. PATCHES.md

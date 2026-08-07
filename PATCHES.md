@@ -27,6 +27,8 @@ by cmd/sync are not listed; they apply uniformly to every file.
 
 - text/template/patch_exec.go (and tests): ExecuteFuncs, the
   per-execution function overlay of golang/go#54450.
+- html/template/patch_template.go (and tests): ExecuteFuncs for the
+  escaped package.
 
 ## Patched files
 
