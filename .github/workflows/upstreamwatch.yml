@@ -1,0 +1,55 @@
+name: upstreamwatch
+
+on:
+  schedule:
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - id: watch
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: go run ./cmd/upstreamwatch -advance | tee report.txt
+      - name: report new commits
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet cmd/upstreamwatch/last_alerted; then
+            exit 0
+          fi
+          gh label create upstream-port --force
+          issue="$(gh issue list --label upstream-port --state open --json number --jq '.[0].number')"
+          if [ -z "$issue" ]; then
+            gh issue create --title "Unported upstream commits" --label upstream-port --body-file report.txt
+          else
+            gh issue comment "$issue" --body-file report.txt
+          fi
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git commit -m "upstreamwatch: advance last_alerted" cmd/upstreamwatch/last_alerted
+          git push
+      - name: report security-relevant commits
+        if: steps.watch.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if grep -q '^SECURITY' report.txt; then
+            gh label create security-review --force
+            gh issue create --title "Security-relevant upstream commits" --label security-review --body-file report.txt
+          fi
+          exit 1

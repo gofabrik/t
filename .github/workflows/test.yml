@@ -1,0 +1,38 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ["1.25.x", "1.26.x"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - run: go build ./...
+      - run: go test ./...
+
+  # Informational: the next release candidate, so the coming major's
+  # sync is pre-validated before it lands.
+  next:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - run: |
+          next="$(curl -fsSL 'https://go.dev/dl/?mode=json&include=all' | jq -r '.[0] | select(.stable == false) | .version')"
+          if [ -z "$next" ]; then
+            echo "no prerelease newer than stable"
+            exit 0
+          fi
+          GOTOOLCHAIN="$next" go build ./...
+          GOTOOLCHAIN="$next" go test ./...
