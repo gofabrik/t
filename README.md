@@ -17,4 +17,5 @@ lists every divergence from upstream; in-place edits to upstream files
 are marked with a `// patch:` comment at the edit site.
 
 Source is copied by cmd/sync and carries the Go project's license; see
-LICENSE.
+LICENSE. RELEASE.md describes the support window and the release
+steps.
