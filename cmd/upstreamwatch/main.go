@@ -19,10 +19,12 @@
 //
 // The exit status is 1 when attention is required: a release-branch
 // commit touches html/template (the same-day security case, reported
-// on a SECURITY line), or the latest stable Go release is newer than
-// VERSION (a STALE line). Commits touching the escape files or the
-// parse package are flagged in the report; their merges need human
-// review rather than a rubber stamp.
+// on a SECURITY line), the latest stable Go release is newer than
+// VERSION (a STALE line), or, when GITHUB_REPOSITORY is set, the
+// tracked release has no matching v0.<minor> tag (a RELEASE line - a
+// sync is finished when consumers can require it). Commits touching
+// the escape files or the parse package are flagged in the report;
+// their merges need human review rather than a rubber stamp.
 package main
 
 import (
@@ -183,6 +185,25 @@ func run(advance bool) (attention bool, err error) {
 	if len(releases) > 0 && newer(releases[0].Version, release) {
 		fmt.Printf("STALE: latest stable %s is newer than VERSION %s\n", releases[0].Version, release)
 		attention = true
+	}
+
+	if repo := os.Getenv("GITHUB_REPOSITORY"); repo != "" {
+		var tags []struct{ Name string }
+		if err := get("https://api.github.com/repos/"+repo+"/tags?per_page=100", &tags); err != nil {
+			return false, err
+		}
+		prefix := fmt.Sprintf("v0.%d.", minor)
+		tagged := false
+		for _, tag := range tags {
+			if strings.HasPrefix(tag.Name, prefix) {
+				tagged = true
+				break
+			}
+		}
+		if !tagged {
+			fmt.Printf("RELEASE: %s is synced but no %s* tag exists\n", release, prefix)
+			attention = true
+		}
 	}
 
 	if newestSha == "" && !attention {
