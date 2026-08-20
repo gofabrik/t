@@ -43,6 +43,22 @@ func buildMinimalGOROOT(t *testing.T, version string) string {
 	return root
 }
 
+// deleteOtherBranches removes every local branch except keep, so a fixture
+// clone never inherits branches (such as a real sync/<release>) from the
+// source checkout's state.
+func deleteOtherBranches(t *testing.T, dir, keep string) {
+	t.Helper()
+	out, err := exec.Command("git", "-C", dir, "for-each-ref", "--format=%(refname:short)", "refs/heads").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, b := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if b != "" && b != keep {
+			mustGit(t, dir, "branch", "-D", b)
+		}
+	}
+}
+
 // conflictClone creates a clone whose main and upstream branches conflict.
 func conflictClone(t *testing.T) string {
 	t.Helper()
@@ -52,6 +68,7 @@ func conflictClone(t *testing.T) string {
 	mustGit(t, cloneDir, "config", "user.email", "test@test")
 	mustGit(t, cloneDir, "config", "user.name", "Test")
 	mustGit(t, cloneDir, "checkout", "-B", "main")
+	deleteOtherBranches(t, cloneDir, "main")
 	writeFile(t, cloneDir, "VERSION", "go1.26.6\n")
 	mustGit(t, cloneDir, "add", "VERSION")
 	mustGit(t, cloneDir, "commit", "--allow-empty", "-m", "pin VERSION go1.26.6")
