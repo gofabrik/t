@@ -51,8 +51,8 @@ func conflictClone(t *testing.T) string {
 	mustGit(t, "", "clone", "--no-local", "file://"+selfRoot, cloneDir)
 	mustGit(t, cloneDir, "config", "user.email", "test@test")
 	mustGit(t, cloneDir, "config", "user.name", "Test")
-	mustGit(t, cloneDir, "fetch", "origin", "upstream:upstream")
-	mustGit(t, cloneDir, "checkout", "main")
+	mustGit(t, cloneDir, "checkout", "-B", "main")
+	mustGit(t, cloneDir, "branch", "upstream", "main")
 
 	// cmd/sync must leave the conflict marker untouched.
 	writeFile(t, cloneDir, "sync_conflict_marker.txt", "main content\n")

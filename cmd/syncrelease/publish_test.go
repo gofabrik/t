@@ -132,7 +132,7 @@ func publishTestEnv(t *testing.T, api *fakeAPI, remoteHasUpstream, remoteHasSync
 	t.Cleanup(srv.Close)
 
 	repoDir := t.TempDir()
-	mustGit(t, repoDir, "init")
+	mustGit(t, repoDir, "init", "-b", "main")
 	mustGit(t, repoDir, "config", "user.email", "test@test")
 	mustGit(t, repoDir, "config", "user.name", "Test")
 
@@ -152,7 +152,7 @@ func publishTestEnv(t *testing.T, api *fakeAPI, remoteHasUpstream, remoteHasSync
 	mustGit(t, repoDir, "checkout", "main")
 
 	bareDir := t.TempDir() + "/remote.git"
-	mustGit(t, "", "init", "--bare", bareDir)
+	mustGit(t, "", "init", "--bare", "-b", "main", bareDir)
 	mustGit(t, repoDir, "remote", "add", "origin", "file://"+bareDir)
 
 	if remoteHasUpstream {
