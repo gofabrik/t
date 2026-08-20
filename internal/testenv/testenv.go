@@ -4,6 +4,7 @@
 package testenv
 
 import (
+	"os"
 	"os/exec"
 	"testing"
 )
@@ -23,4 +24,11 @@ func GoToolPath(t testing.TB) string {
 		t.Fatal(err)
 	}
 	return path
+}
+
+// SetGODEBUG appends v to the GODEBUG environment variable for the
+// duration of the test.
+func SetGODEBUG(t testing.TB, v string) {
+	t.Helper()
+	t.Setenv("GODEBUG", os.Getenv("GODEBUG")+","+v)
 }

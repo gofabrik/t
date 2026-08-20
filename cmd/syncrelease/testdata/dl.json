@@ -1,0 +1,47 @@
+[
+  {
+    "version": "go1.28rc1",
+    "stable": false,
+    "files": [
+      {
+        "filename": "go1.28rc1.src.tar.gz",
+        "os": "",
+        "arch": "",
+        "version": "go1.28rc1",
+        "sha256": "rc00000000000000000000000000000000000000000000000000000000000000",
+        "size": 500000,
+        "kind": "source"
+      }
+    ]
+  },
+  {
+    "version": "go1.27.0",
+    "stable": true,
+    "files": [
+      {
+        "filename": "go1.27.0.src.tar.gz",
+        "os": "",
+        "arch": "",
+        "version": "go1.27.0",
+        "sha256": "aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899",
+        "size": 1000000,
+        "kind": "source"
+      }
+    ]
+  },
+  {
+    "version": "go1.26.6",
+    "stable": true,
+    "files": [
+      {
+        "filename": "go1.26.6.src.tar.gz",
+        "os": "",
+        "arch": "",
+        "version": "go1.26.6",
+        "sha256": "1122334455667788990011223344556677889900112233445566778899001122",
+        "size": 990000,
+        "kind": "source"
+      }
+    ]
+  }
+]
