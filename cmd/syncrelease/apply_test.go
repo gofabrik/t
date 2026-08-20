@@ -52,6 +52,9 @@ func conflictClone(t *testing.T) string {
 	mustGit(t, cloneDir, "config", "user.email", "test@test")
 	mustGit(t, cloneDir, "config", "user.name", "Test")
 	mustGit(t, cloneDir, "checkout", "-B", "main")
+	writeFile(t, cloneDir, "VERSION", "go1.26.6\n")
+	mustGit(t, cloneDir, "add", "VERSION")
+	mustGit(t, cloneDir, "commit", "--allow-empty", "-m", "pin VERSION go1.26.6")
 	mustGit(t, cloneDir, "branch", "upstream", "main")
 
 	// cmd/sync must leave the conflict marker untouched.

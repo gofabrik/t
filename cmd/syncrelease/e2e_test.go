@@ -40,6 +40,9 @@ func TestApply_E2E(t *testing.T) {
 	run(cloneDir, "git", "fetch", "origin", "upstream:upstream")
 	run(cloneDir, "git", "fetch", "origin", "main:main")
 	run(cloneDir, "git", "checkout", "main")
+	writeFile(t, cloneDir, "VERSION", "go1.26.6\n")
+	run(cloneDir, "git", "add", "VERSION")
+	run(cloneDir, "git", "commit", "--allow-empty", "-m", "pin VERSION go1.26.6")
 
 	mainHead := gitRevParse(t, cloneDir, "HEAD")
 
