@@ -27,11 +27,12 @@ direction is an import-path change. The fork will stop receiving
 releases if Go adds ExecuteFuncs or another maintained package
 provides an equivalent API.
 
-The packages track the latest stable Go release; VERSION names the
-exact source tree. Each release line tracks the matching Go version:
-v0.26.x tracks Go 1.26 and builds with Go 1.25 or newer. PATCHES.md
-lists every divergence from upstream; in-place edits to upstream
-files are marked with a `// patch:` comment at the edit site.
+The packages track the latest stable Go release on main; VERSION names the
+exact source tree. Each v0.<minor>.x line tracks the matching Go release and
+builds with the previous toolchain, so v0.26.x builds with Go 1.25 or newer.
+At each major rollover the old line freezes and the new line carries upstream's
+security fixes. PATCHES.md lists every divergence from upstream; in-place edits
+are marked with a `// patch:` comment.
 
 Source is copied by cmd/sync and carries the Go project's license; see
 LICENSE. RELEASE.md describes the support window and the release
