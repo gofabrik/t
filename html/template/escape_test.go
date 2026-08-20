@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gofabrik/t/internal/testenv"
 	"github.com/gofabrik/t/text/template"
 	"github.com/gofabrik/t/text/template/parse"
 	"os"
@@ -2263,10 +2264,7 @@ func TestAliasedParseTreeDoesNotOverescape(t *testing.T) {
 }
 
 func TestMetaContentEscapeGODEBUG(t *testing.T) {
-	savedGODEBUG := os.Getenv("GODEBUG")
-	os.Setenv("GODEBUG", savedGODEBUG+",htmlmetacontenturlescape=0")
-	defer func() { os.Setenv("GODEBUG", savedGODEBUG) }()
-
+	testenv.SetGODEBUG(t, "htmlmetacontenturlescape=0")
 	tmpl := Must(New("").Parse(`<meta http-equiv="refresh" content="asd; url={{"javascript:alert(1)"}}; asd; url={{"vbscript:alert(1)"}}; asd">`))
 	var b strings.Builder
 	if err := tmpl.Execute(&b, nil); err != nil {
