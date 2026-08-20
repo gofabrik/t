@@ -4,14 +4,21 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: local
     strategy:
       matrix:
         go: ["1.25.x", "1.26.x"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
@@ -23,8 +30,12 @@ jobs:
   next:
     runs-on: ubuntu-latest
     continue-on-error: true
+    env:
+      GOTOOLCHAIN: local
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-go@v5
         with:
           go-version: stable

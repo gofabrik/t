@@ -1,0 +1,59 @@
+name: sync
+
+on:
+  schedule:
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: fetch upstream and sync refs
+        run: |
+          git fetch origin upstream
+          git fetch origin '+refs/heads/sync/*:refs/heads/sync/*'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      # Build before mutating branches so later steps run code from the
+      # trusted triggering ref.
+      - name: build syncrelease
+        run: go build -o "$RUNNER_TEMP/syncrelease" ./cmd/syncrelease
+      - id: detect
+        run: |
+          release="$("$RUNNER_TEMP/syncrelease" detect)"
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+      - name: fetch release
+        if: steps.detect.outputs.release != ''
+        id: fetch
+        run: |
+          goroot="$("$RUNNER_TEMP/syncrelease" fetch "${{ steps.detect.outputs.release }}")"
+          echo "goroot=$goroot" >> "$GITHUB_OUTPUT"
+      - name: apply
+        if: steps.detect.outputs.release != ''
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          rc=0
+          "$RUNNER_TEMP/syncrelease" apply "${{ steps.fetch.outputs.goroot }}" --plan-out "$RUNNER_TEMP/plan.json" || rc=$?
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then
+            exit "$rc"
+          fi
+      - name: publish
+        if: steps.detect.outputs.release != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.SYNC_TOKEN }}
+        run: |
+          "$RUNNER_TEMP/syncrelease" publish --plan "$RUNNER_TEMP/plan.json"
