@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"testing"
 )
 
@@ -43,12 +44,18 @@ func main() {
 
 	// patch: unlike the standard library's, this package resolves
 	// through a module, so the probe program needs one pointing back at
-	// this checkout.
+	// this checkout. The go directive is derived from the root go.mod so
+	// turnover bumps never break this test.
 	root, err := filepath.Abs("../..")
 	if err != nil {
 		t.Fatal(err)
 	}
-	gomod := "module m\n\ngo 1.25\n\nrequire github.com/gofabrik/t v0.0.0\n\nreplace github.com/gofabrik/t => " + root + "\n"
+	rootmod, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	goline := regexp.MustCompile(`(?m)^go .*$`).Find(rootmod)
+	gomod := "module m\n\n" + string(goline) + "\n\nrequire github.com/gofabrik/t v0.0.0\n\nreplace github.com/gofabrik/t => " + root + "\n"
 	if err := os.WriteFile(filepath.Join(td, "go.mod"), []byte(gomod), 0644); err != nil {
 		t.Fatal(err)
 	}
