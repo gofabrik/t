@@ -1,0 +1,3 @@
+module github.com/example/testrepo
+
+go 1.25
