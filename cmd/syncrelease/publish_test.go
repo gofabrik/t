@@ -330,7 +330,7 @@ func TestPublish_ResolvedBranchPickup(t *testing.T) {
 	}
 }
 
-func TestPublish_ClosedUnmergedPRHalt(t *testing.T) {
+func TestPublish_ClosedUnmergedPRRecreated(t *testing.T) {
 	closedPR := ghPR{Number: 5, State: "closed", MergedAt: "", Title: "Sync go1.27.0"}
 	api := &fakeAPI{prs: []ghPR{closedPR}}
 	pub, bareDir := publishTestEnv(t, api, false, false)
@@ -338,17 +338,14 @@ func TestPublish_ClosedUnmergedPRHalt(t *testing.T) {
 	if err := pub.reconcile(Plan{Release: "go1.27.0"}, &out); err != nil {
 		t.Fatalf("reconcile: %v\n%s", err, out.String())
 	}
-	if api.issuesCreated != 0 {
-		t.Errorf("issuesCreated = %d after closed-unmerged PR, want 0", api.issuesCreated)
+	if api.issuesCreated != 1 {
+		t.Errorf("issuesCreated = %d after closed-unmerged PR, want 1", api.issuesCreated)
 	}
-	if api.prsCreated != 0 {
-		t.Errorf("prsCreated = %d after closed-unmerged PR, want 0", api.prsCreated)
+	if api.prsCreated != 1 {
+		t.Errorf("prsCreated = %d after closed-unmerged PR, want 1", api.prsCreated)
 	}
-	if !strings.Contains(out.String(), "closed without merge") {
-		t.Errorf("output missing halt message: %s", out.String())
-	}
-	if len(lsRemoteRefs(t, bareDir, "refs/heads/*")) > 0 {
-		t.Error("refs pushed to remote despite closed-unmerged halt")
+	if refs := lsRemoteRefs(t, bareDir, "refs/heads/sync/go1.27.0"); len(refs) == 0 {
+		t.Error("sync branch not pushed after closed-unmerged PR")
 	}
 }
 

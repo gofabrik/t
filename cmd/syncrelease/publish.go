@@ -38,7 +38,9 @@ func newPublisher(repoRoot, token, owner, repo string) *publisher {
 	}
 }
 
-// reconcile checks terminal PR state before creating issues or pushing refs.
+// reconcile creates whatever the sync still needs. A merged PR is the
+// only terminal state; a closed or deleted PR is recreated because the
+// release is still unsynced.
 func (p *publisher) reconcile(plan Plan, stdout io.Writer) error {
 	syncBranch := "sync/" + plan.Release
 	head := p.owner + ":" + syncBranch
@@ -50,10 +52,6 @@ func (p *publisher) reconcile(plan Plan, stdout io.Writer) error {
 	for _, pr := range prs {
 		if pr.MergedAt != "" {
 			fmt.Fprintf(stdout, "PR #%d merged; release sync complete\n", pr.Number)
-			return nil
-		}
-		if pr.State == "closed" {
-			fmt.Fprintf(stdout, "PR #%d was closed without merge; halting\n", pr.Number)
 			return nil
 		}
 	}
