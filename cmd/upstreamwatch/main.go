@@ -17,12 +17,14 @@
 // marker past them once they are reported. The distance between the
 // two markers is the outstanding port debt.
 //
-// The exit status is 1 when attention is required: a release-branch
+// The exit status is 2 when attention is required: a release-branch
 // commit touches html/template (the same-day security case, reported
 // on a SECURITY line), the latest stable Go release is newer than
 // VERSION (a STALE line), or, when GITHUB_REPOSITORY is set, the
 // tracked release has no matching v0.<minor> tag (a RELEASE line - a
-// sync is finished when consumers can require it). Commits touching
+// sync is finished when consumers can require it). Exit status 1 is
+// reserved for errors, so callers can tell a broken run from a report
+// that needs action. Commits touching
 // the escape files or the parse package are flagged in the report;
 // their merges need human review rather than a rubber stamp.
 package main
@@ -69,7 +71,7 @@ func main() {
 		os.Exit(1)
 	}
 	if attention {
-		os.Exit(1)
+		os.Exit(2)
 	}
 }
 
