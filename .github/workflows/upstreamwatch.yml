@@ -20,11 +20,25 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: stable
+      # Exit 0: nothing new. Exit 2: the report needs action. Anything
+      # else is a broken run and fails the job here; later steps never
+      # advance markers or file issues from a partial report.
       - id: watch
-        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: go run ./cmd/upstreamwatch -advance | tee report.txt
+        run: |
+          set +e
+          go run ./cmd/upstreamwatch -advance | tee report.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then
+            exit "$rc"
+          fi
+          if [ "$rc" -eq 2 ] && ! grep -qE '^(SECURITY|STALE|RELEASE)' report.txt; then
+            echo "exit 2 without an attention line; treating as an error" >&2
+            exit 1
+          fi
       - name: report new commits
         env:
           GH_TOKEN: ${{ github.token }}
@@ -42,14 +56,20 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git commit -m "upstreamwatch: advance last_alerted" cmd/upstreamwatch/last_alerted
+          git pull --rebase origin main
           git push
       - name: report security-relevant commits
-        if: steps.watch.outcome == 'failure'
+        if: steps.watch.outputs.rc == '2'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if grep -q '^SECURITY' report.txt; then
-            gh label create security-review --force
-            gh issue create --title "Security-relevant upstream commits" --label security-review --body-file report.txt
+          if ! grep -q '^SECURITY' report.txt; then
+            exit 0
           fi
-          exit 1
+          gh label create security-review --force
+          issue="$(gh issue list --label security-review --state open --json number --jq '.[0].number')"
+          if [ -z "$issue" ]; then
+            gh issue create --title "Security-relevant upstream commits" --label security-review --body-file report.txt
+          else
+            echo "security issue #$issue already open"
+          fi
